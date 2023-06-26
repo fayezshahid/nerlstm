@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chatbot</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .chat-box {
+            height: 80vh;
+            overflow-y: scroll;
+        }
+        .chat-bubble-send {
+            background-color: #c3bdbd;
+            /* color: white; */
+            border-radius: 0.5rem;
+            padding: 10px;
+            margin-left: 80px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-bubble-response {
+            background-color: #c3bdbd;
+            /* color: white; */
+            border-radius: 0.5rem;
+            padding: 10px;
+            margin-right: 80px;
+            margin-bottom: 10px;
+        }
+        .list-group li{
+          margin-bottom: 10px;
+          border-radius: 25px;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Med Chat</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false" id="navbarDropdown">
+                  Switch Model
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" style="cursor: pointer;" onclick="changeDropdownValue('NER 1')">NER 1</a></li>
+                  <li><a class="dropdown-item" style="cursor: pointer;" onclick="changeDropdownValue('NER 2')">NER 2</a></li>
+                </ul>
+              </li>
+            </ul>
+            <!-- <div class="d-flex"> -->
+              <span class="navbar-text me-3">Welcome, {{ name }}</span>
+              <form action="{{ url_for('logout') }}" method="post">
+                <button class="btn btn-outline-danger" type="submit">Logout</button>
+              </form>
+            <!-- </div> -->
+          </div>
+        </div>
+      </nav>      
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card">
+            <div style="height: 90vh; overflow-y: scroll;" class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5>Previous Chats</h5>
+                  <button type="button" class="btn btn-outline-primary" style="margin-bottom: 10px;" onclick="newChat()">+ New Chat</button>
+                </div>
+                <ul class="list-group" id="prevChats">
+                  <!-- <li class="list-group-item bot-bubble rounded-bubble">Hi, how can I help you?</li> -->
+                  <!-- <div class="list-group-item bot-bubble rounded-bubble">
+                    <p></p>
+                    <i class="fa fa-user"></i>
+                  </div> -->
+                </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="card">
+            <div style="height: 90vh" class="card-body">
+              <div class="chat-box">
+                <!-- <div class="chat-message">
+                    <div class="chat-bubble">Hi, how can I help you?</div>
+                </div>
+                <div class="chat-message">
+                    <div class="chat-bubble">What is your name?</div>
+                </div>
+                <div class="chat-message">
+                    <div class="chat-bubble">How old are you?</div>
+                </div> -->
+              </div>
+              <form>
+                <div class="form-group d-flex" style="margin-top: 5px;">
+                  <input type="text" id="query" class="form-control" placeholder="Type your message...">
+                  <button type="button" class="btn btn-primary" style="margin-left: 5px;" onclick="askBot()">Send</button>
+                </div>
+                
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+    <script>
+        var flag = 0;
+        var chatId;
+        var model = 1;
+        var max = 0;
+
+        $(document).ready(function() {
+          getChats();
+        });
+
+        function changeDropdownValue(value){
+          // console.log(value);
+          model = parseInt(value.split(' ')[1])
+          $('#navbarDropdown').html(value);
+        }
+        // <i class="fa fa-user"></i>
+        function getChats(){
+          $.post('/getChats', function(data){
+            console.log(data);
+            $('#prevChats').html('');
+            for(var i=0; i<data.length; i++){
+              $('#prevChats').append(`
+                <li class="list-group-item bot-bubble rounded-bubble d-flex justify-content-between" style="cursor: pointer;" id="chat${data[i].id}" onclick="openChat(${data[i].id})">${data[i].name}
+                  <div>
+                    <i onclick="deleteChat(event, ${data[i].id})" class="fa fa-trash"></i>
+                  </div>
+                </li>
+              `);
+            }
+          });
+        }
+
+        function deleteChat(event, id){
+          event.stopPropagation();
+          $.post('/deleteChat/' + id, function(data){
+            getChats();
+          });
+        }
+
+        function newChat(){
+          $('#chat'+chatId).css('background-color', '');
+          flag = 0;
+          chatId = 0;
+          $('.chat-box').html('');
+          // for(var i=1; i<=max; i++){
+          //   $('#chat'+i).css('background-color', '');
+          // }
+        }
+
+        function openChat(id){
+          $('#chat'+id).css('background-color', '#e7e9eb');
+          if(chatId != id)
+            $('#chat'+chatId).css('background-color', '');
+          // for(var i=1; i<=max; i++){
+          //   if(i != id){
+          //     $('#chat'+i).css('background-color', '');
+          //   }
+          // }
+          flag = 1;
+          chatId = id;
+          $.post('/getMessages/' + id, function(data){
+            console.log(data);
+            $('.chat-box').html('');
+            for(var i=0; i<data.length; i++){
+              // if(data[i].sender == 'bot'){
+                $('.chat-box').append(`
+                    <div class="chat-message">
+                        <div class="chat-bubble-send">${data[i].question}</div>
+                    </div>
+                `);
+              // }
+              // else{
+                $('.chat-box').append(`
+                    <div class="chat-message">
+                        <div class="chat-bubble-response">${data[i].answer}</div>
+                    </div>
+                `);
+              // }
+            }
+          });
+        }
+
+        function askBot(){
+          var q = $('#query').val();
+          $('#query').val('');
+          console.log('hello how r u');
+          $('.chat-box').append(`
+              <div class="chat-message">
+                  <div class="chat-bubble-send">${q}</div>
+              </div>
+          `);
+
+          var chatName;
+          var response;
+
+          $.ajax({
+            async: false,
+            method: 'POST',
+            url: '/processMessage/' + q + '/' + model,
+            success: function(data) {
+              console.log(data);
+              response = data.response;
+              chatName = data.disease;
+              $('.chat-box').append(`
+                  <div class="chat-message">
+                      <div class="chat-bubble-response">${response}</div>
+                  </div>
+              `);
+            },
+          });
+
+          if(!flag){
+            flag = 1;
+            $.ajax({
+              async: false,
+              method: 'POST',
+              url: '/addNewChat/' + chatName,
+              success: function(data) {
+                console.log(data);
+                // $('#chat'+chatId).css('background-color', '');
+                chatId = parseInt(data.id);
+                // getChats();
+                var newChat = `
+                  <li class="list-group-item bot-bubble rounded-bubble d-flex justify-content-between" style="cursor: pointer; display: none" id="chat${data.id}" onclick="openChat(${data.id})">${data.name}
+                    <div>
+                      <i onclick="deleteChat(event, ${data.id})" class="fa fa-trash"></i>
+                    </div>
+                  </li>
+                `;
+                $('#prevChats').prepend(newChat);
+                $(`#chat${data.id}`).hide().slideDown(1000);
+                $(`#chat${data.id}`).css('background-color', '#e7e9eb');
+              },
+            });
+          }
+
+          $.ajax({
+            async: false,
+            method: 'POST',
+            url: '/addNewMessage/' + chatId + '/' + q + '/' + response,
+            success: function(data) {
+              console.log(data);
+            },
+          });
+        }
+    </script>
+
+  </body>
+</html>

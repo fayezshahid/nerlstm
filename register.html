@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>MED CHAT</title>
+</head>
+<body class="bg-light align-items-center">
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-lg-4 bg-white m-auto rounded-top wrapper">
+                <h2 class="text-center pt-3">Signup Now</h2>
+                <p class="text-center text-muted lead">It`s free and takes a minute</p>
+                {% if msg %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ msg }}
+                    </div>
+                {% endif %}
+                <!--signup form -->
+                <form action ="{{ url_for('register') }}" method="post">
+                    <!-- <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                        <input type="text" class="form-control" placeholder="First Name">
+                    </div> -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                        <input type="text" class="form-control" placeholder="Name" name="name">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                        <input type="text" class="form-control" placeholder="Email" name="email">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa fa-lock"></i></span>
+                        <input type="password" class="form-control" placeholder="Password" name="password">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa fa-lock"></i></span>
+                        <input type="password" class="form-control" placeholder="Confirm Password" name="confirm_password">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Register Now</button>
+                        <p class="text-center text-muted mt-2">When you register by clicking Signup Button, You agree to our 
+                        <a href="#">Privacy Policy</a> and <a href="#">Terms and Conditions</a></p>
+                        <p class="text-center">
+                            Already Have Account ? <a href="{{ url_for('login') }}">Login Here</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>
